@@ -119,14 +119,13 @@ pipeline {
 }
 
 def sendTelegramMessage(String message) {
-    // Создаем временный файл с сообщением в правильной кодировке
-    writeFile file: 'temp_message.txt', text: message, encoding: 'UTF-8'
-    
-    // Используем curl для отправки сообщения через временный файл
-    bat """
-        curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" ^
-            -F "chat_id=%TELEGRAM_CHAT_ID%" ^
-            -F "text=@temp_message.txt"
-        del temp_message.txt
+    writeFile file: 'message.txt', text: message
+    powershell """
+        \$token = \$env:TELEGRAM_BOT_TOKEN
+        \$chatId = \$env:TELEGRAM_CHAT_ID
+        \$text = Get-Content -Path 'message.txt' -Raw
+        \$encodedText = [System.Web.HttpUtility]::UrlEncode(\$text)
+        Invoke-RestMethod -Uri "https://api.telegram.org/bot\$token/sendMessage?chat_id=\$chatId&text=\$encodedText" -Method Post
+        Remove-Item -Path 'message.txt'
     """
 }
