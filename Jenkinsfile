@@ -91,12 +91,13 @@ pipeline {
 }
 
 
-def sendTelegramMessage(message, telegramToken, telegramChatId) {
-    def telegramUrl = "https://api.telegram.org/bot${telegramToken}/sendMessage"
-    
+// Функция для отправки сообщения в Telegram
+def sendTelegramMessage(String message) {
+    def telegramUrl = "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
     bat """
-        curl -X POST "${telegramUrl}" ^
-        -H "Content-Type: application/json" ^
-        -d "{\\"chat_id\\": \\"${telegramChatId}\\", \\"text\\": \\"${message.replace('"', '\\"')}\\", \\"parse_mode\\": \\"HTML\\"}"
+        powershell -command "
+            \$response = Invoke-RestMethod -Uri '${telegramUrl}' -Method Post -ContentType 'application/json' -Body '{\"chat_id\": \"${TELEGRAM_CHAT_ID}\", \"text\": \"${message}\"}' -UseBasicParsing
+            if (\$response.ok -eq 'True') { Write-Host 'Message sent successfully' } else { Write-Error 'Failed to send message' }
+        "
     """
 }
