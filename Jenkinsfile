@@ -84,8 +84,7 @@ pipeline {
         success {
             script {
                 if (params.DESTROY) {
-                    def message = "✅ Ресурсы успешно удалены сборкой ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                    sendTelegramMessage(message)
+                    sendTelegramMessage("✅ Ресурсы успешно удалены сборкой ${env.JOB_NAME} #${env.BUILD_NUMBER}")
                 } else {
                     def message = """
 ✅ Сборка ${env.JOB_NAME} #${env.BUILD_NUMBER} успешно завершена
@@ -120,11 +119,14 @@ pipeline {
 }
 
 def sendTelegramMessage(String message) {
-    // Используем PowerShell для правильного кодирования сообщения
-    powershell """
-        \$text = [System.Net.WebUtility]::UrlEncode('${message}')
-        curl -s -X POST "https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage" `
-            -d "chat_id=${env.TELEGRAM_CHAT_ID}" `
-            -d "text=\$text"
+    // Создаем временный файл с сообщением в правильной кодировке
+    writeFile file: 'temp_message.txt', text: message, encoding: 'UTF-8'
+    
+    // Используем curl для отправки сообщения через временный файл
+    bat """
+        curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" ^
+            -F "chat_id=%TELEGRAM_CHAT_ID%" ^
+            -F "text=@temp_message.txt"
+        del temp_message.txt
     """
 }
