@@ -91,10 +91,12 @@ pipeline {
 }
 
 def sendTelegramMessage(String message) {
-    powershell """
-        curl -s -X POST "https://api.telegram.org/bot\$env:TELEGRAM_BOT_TOKEN/sendMessage" `
-        -d "chat_id=\$env:TELEGRAM_CHAT_ID" `
-        -d "text=\$('${message}' -replace '"', '\\"')"
+    bat """
+        echo ${message} > message.txt
+        curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" \
+        -d "chat_id=%TELEGRAM_CHAT_ID%" \
+        -d "text=@message.txt"
+        del message.txt
     """
 }
 
