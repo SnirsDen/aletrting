@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label 'windows'
-    }
+    agent any
     environment {
         GOOGLE_CREDENTIALS = credentials('gcp-service-account-key')
         TF_VAR_project_id = 'doplom-471707'
