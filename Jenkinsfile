@@ -1,3 +1,20 @@
+def sendTelegramMessage(String message) {
+    def url = "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
+    def payload = [
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'Markdown'
+    ]
+    def json = groovy.json.JsonOutput.toJson(payload)
+    httpRequest(
+        consoleLogResponseBody: true,
+        contentType: 'APPLICATION_JSON',
+        httpMode: 'POST',
+        requestBody: json,
+        url: url
+    )
+}
+
 pipeline {
     agent any
     environment {
@@ -91,20 +108,3 @@ pipeline {
 }
 
 
-// Функция для отправки сообщения в Telegram
-def sendTelegramMessage(String message) {
-    def url = "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
-    def payload = [
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown'
-    ]
-    def json = groovy.json.JsonOutput.toJson(payload)
-    httpRequest(
-        consoleLogResponseBody: true,
-        contentType: 'APPLICATION_JSON',
-        httpMode: 'POST',
-        requestBody: json,
-        url: url
-    )
-}
