@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    parameters {
+        booleanParam(name: 'DESTROY', defaultValue: false, description: 'Уничтожить инфраструктуру после выполнения')
+    }
     environment {
         GOOGLE_CREDENTIALS = credentials('gcp-service-account-key')
         TF_VAR_project_id = 'doplom-471707'
@@ -13,7 +16,8 @@ pipeline {
         stage('Оповещение о начале') {
             steps {
                 script {
-                    sendTelegramMessage("🚀 Запуск сборки ${env.JOB_NAME} #${env.BUILD_NUMBER}")
+                    def action = params.DESTROY ? "удаления" : "сборки"
+                    sendTelegramMessage("🚀 Запуск ${action} ${env.JOB_NAME} #${env.BUILD_NUMBER}")
                 }
             }
         }
@@ -28,21 +32,36 @@ pipeline {
             }
         }
         stage('Terraform Validate') {
+            when {
+                expression { return !params.DESTROY }
+            }
             steps {
                 bat 'terraform validate'
             }
         }
         stage('Terraform Plan') {
+            when {
+                expression { return !params.DESTROY }
+            }
             steps {
                 bat 'terraform plan -out=tfplan'
             }
         }
-        stage('Terraform Apply') {
+        stage('Terraform Apply или Destroy') {
             steps {
-                bat 'terraform apply -auto-approve tfplan'
+                script {
+                    if (params.DESTROY) {
+                        bat 'terraform destroy -auto-approve'
+                    } else {
+                        bat 'terraform apply -auto-approve tfplan'
+                    }
+                }
             }
         }
         stage('Получение выходных данных') {
+            when {
+                expression { return !params.DESTROY }
+            }
             steps {
                 bat 'terraform output -json > outputs.json'
                 script {
@@ -56,11 +75,19 @@ pipeline {
     }
     post {
         always {
-            archiveArtifacts artifacts: 'outputs.json', fingerprint: true
+            script {
+                if (fileExists('outputs.json')) {
+                    archiveArtifacts artifacts: 'outputs.json', fingerprint: true
+                }
+            }
         }
         success {
             script {
-                def message = """
+                if (params.DESTROY) {
+                    def message = "✅ Ресурсы успешно удалены сборкой ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                    sendTelegramMessage(message)
+                } else {
+                    def message = """
 ✅ Сборка ${env.JOB_NAME} #${env.BUILD_NUMBER} успешно завершена
 
 📊 Доступ к мониторингу:
@@ -70,7 +97,8 @@ pipeline {
 
 Подробности: ${env.BUILD_URL}
 """
-                sendTelegramMessage(message)
+                    sendTelegramMessage(message)
+                }
             }
         }
         failure {
@@ -86,18 +114,17 @@ pipeline {
         cleanup {
             bat 'del /f /q terraform.tfstate* || true'
             bat 'del /f /q tfplan || true'
+            bat 'del /f /q outputs.json || true'
         }
     }
 }
 
 def sendTelegramMessage(String message) {
-    bat """
-        for /f "delims=" %%a in ('powershell "[System.Net.WebUtility]::UrlEncode('${message}')"') do set encoded_message=%%a
-        curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" ^
-            -d "chat_id=%TELEGRAM_CHAT_ID%" ^
-            -d "text=%encoded_message%"
+    // Используем PowerShell для правильного кодирования сообщения
+    powershell """
+        \$text = [System.Net.WebUtility]::UrlEncode('${message}')
+        curl -s -X POST "https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage" `
+            -d "chat_id=${env.TELEGRAM_CHAT_ID}" `
+            -d "text=\$text"
     """
 }
-
-
-
