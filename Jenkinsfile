@@ -94,13 +94,9 @@ pipeline {
 def sendTelegramMessage(message, telegramToken, telegramChatId) {
     def telegramUrl = "https://api.telegram.org/bot${telegramToken}/sendMessage"
     
-    
     bat """
         curl -X POST "${telegramUrl}" ^
         -H "Content-Type: application/json" ^
         -d "{\\"chat_id\\": \\"${telegramChatId}\\", \\"text\\": \\"${message.replace('"', '\\"')}\\", \\"parse_mode\\": \\"HTML\\"}"
     """
-
-    
-    bat(command)
 }
