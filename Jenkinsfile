@@ -92,24 +92,19 @@ pipeline {
 
 
 // Функция для отправки сообщения в Telegram
-def sendTelegramMessage(String message, String parseMode = null) {
-    def telegramUrl = "https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage"
-    
-    def body = [
-        chat_id: env.TELEGRAM_CHAT_ID,
-        text: message
+def sendTelegramMessage(String message) {
+    def url = "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
+    def payload = [
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'Markdown'
     ]
-    
-    if (parseMode) {
-        body.parse_mode = parseMode
-    }
-    
-    def jsonBody = new groovy.json.JsonBuilder(body).toString()
-    
-    bat """
-        powershell -Command "
-            \$response = Invoke-RestMethod -Uri '${telegramUrl}' -Method Post -Body '\${jsonBody}' -ContentType 'application/json; charset=utf-8' -UseBasicParsing
-            Write-Output \$response
-        "
-    """
+    def json = groovy.json.JsonOutput.toJson(payload)
+    httpRequest(
+        consoleLogResponseBody: true,
+        contentType: 'APPLICATION_JSON',
+        httpMode: 'POST',
+        requestBody: json,
+        url: url
+    )
 }
