@@ -1,20 +1,3 @@
-def sendTelegramMessage(String message) {
-    def url = "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
-    def payload = [
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown'
-    ]
-    def json = groovy.json.JsonOutput.toJson(payload)
-    httpRequest(
-        consoleLogResponseBody: true,
-        contentType: 'APPLICATION_JSON',
-        httpMode: 'POST',
-        requestBody: json,
-        url: url
-    )
-}
-
 pipeline {
     agent any
     environment {
@@ -107,4 +90,11 @@ pipeline {
     }
 }
 
+def sendTelegramMessage(String message) {
+    bat """
+        curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" \
+        -d "chat_id=%TELEGRAM_CHAT_ID%" \
+        -d "text=${message}"
+    """
+}
 
