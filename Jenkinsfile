@@ -90,11 +90,14 @@ pipeline {
     }
 }
 
-def sendTelegramMessage(String message) {
+
+def sendTelegramMessage(message, TELEGRAM_BOT_TOKEN, telegramChatId) {
+    def telegramUrl = "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
+    
+    // Исправляем экранирование для Windows
     bat """
-        curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" \
-        -d "chat_id=%TELEGRAM_CHAT_ID%" \
-        -d "text=${message}"
+        curl -X POST "${telegramUrl}" ^
+        -H "Content-Type: application/json" ^
+        -d "{\\"chat_id\\": \\"${telegramChatId}\\", \\"text\\": \\"${message.replace('"', '\\"')}\\", \\"parse_mode\\": \\"HTML\\"}"
     """
 }
-
