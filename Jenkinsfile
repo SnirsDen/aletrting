@@ -1,7 +1,7 @@
 pipeline {
     agent any
     parameters {
-        booleanParam(name: 'DESTROY', defaultValue: false, description: 'Уничтожить инфраструктуру после выполнения')
+        booleanParam(name: 'DESTROY', defaultValue: true, description: 'Уничтожить инфраструктуру после выполнения')
     }
     environment {
         GOOGLE_CREDENTIALS = credentials('gcp-service-account-key')
