@@ -99,6 +99,6 @@ def sendTelegramMessage(String message) {
             -d "text=Test message without special characters"
     """
 }"
-}
+
 
 
