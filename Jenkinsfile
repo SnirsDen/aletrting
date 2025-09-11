@@ -92,11 +92,10 @@ pipeline {
 
 def sendTelegramMessage(String message) {
     bat """
-        echo ${message} > message.txt
         curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" \
+        -H "Content-Type: application/x-www-form-urlencoded; charset=utf-8" \
         -d "chat_id=%TELEGRAM_CHAT_ID%" \
-        -d "text=@message.txt"
-        del message.txt
+        -d "text=${message}"
     """
 }
 
