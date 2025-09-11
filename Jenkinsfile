@@ -119,13 +119,11 @@ pipeline {
 }
 
 def sendTelegramMessage(String message) {
+    // Записываем сообщение в файл
     writeFile file: 'message.txt', text: message
-    powershell """
-        \$token = \$env:TELEGRAM_BOT_TOKEN
-        \$chatId = \$env:TELEGRAM_CHAT_ID
-        \$text = Get-Content -Path 'message.txt' -Raw
-        \$encodedText = [System.Web.HttpUtility]::UrlEncode(\$text)
-        Invoke-RestMethod -Uri "https://api.telegram.org/bot\$token/sendMessage?chat_id=\$chatId&text=\$encodedText" -Method Post
-        Remove-Item -Path 'message.txt'
+    bat """
+        chcp 65001 > nul
+        curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" -d "chat_id=%TELEGRAM_CHAT_ID%" --data-urlencode text@message.txt
+        del message.txt
     """
 }
