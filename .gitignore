@@ -1,0 +1,8 @@
+terraform.tfstate*
+.terraform
+.terraform.lock*
+*.tfstate
+*.tfstate.*
+terraform_gcp
+terraform_gcp.pub
+credential_GCP.json
