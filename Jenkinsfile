@@ -90,18 +90,15 @@ pipeline {
     }
 }
 
-
 def sendTelegramMessage(String message) {
-    powershell """
-        \$response = Invoke-RestMethod -Uri "https://api.telegram.org/bot\$env:TELEGRAM_BOT_TOKEN/sendMessage" `
-            -Method Post `
-            -Body @{
-                chat_id = \$env:TELEGRAM_CHAT_ID
-                text = '${message}'
-            } `
-            -ContentType "application/x-www-form-urlencoded; charset=utf-8"
-        Write-Output \$response
+    bat """
+        echo Token: %TELEGRAM_BOT_TOKEN%
+        echo Chat ID: %TELEGRAM_CHAT_ID%
+        curl -s -X POST "https://api.telegram.org/bot%TELEGRAM_BOT_TOKEN%/sendMessage" ^
+            -d "chat_id=%TELEGRAM_CHAT_ID%" ^
+            -d "text=Test message without special characters"
     """
+}"
 }
 
 
